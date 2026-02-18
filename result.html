@@ -10,7 +10,6 @@
         h2 { color: #333; margin-bottom: 20px; border-bottom: 2px solid #ff6b6b; display: inline-block; padding-bottom: 5px; }
         .ranking-container { margin-top: 20px; }
         .ranking-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: #fff; border: 1px solid #eee; border-radius: 10px; transition: 0.3s; }
-        /* 1位のスタイル */
         .ranking-item:nth-child(1) { background: #fff9db; border-color: #fcc419; transform: scale(1.05); font-weight: bold; box-shadow: 0 4px 10px rgba(252, 196, 25, 0.2); }
         .rank-badge { background: #ff6b6b; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .vote-count { color: #4dabf7; font-weight: bold; font-size: 1.2em; }
@@ -29,51 +28,55 @@
 </div>
 
 <script>
-    // 提供いただいたGASのURL
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz4USTEMcdvUl0j1EIuL6sbPftjJikcoECPSLqwjjawZ2tbXqgZSQmbRsVDSd8eLdBu/exec";
+
+    // ★index.htmlと同じハッシュ関数を追加
+    async function generateHash(text) {
+        const msgUint8 = new TextEncoder().encode(text);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+    }
 
     async function loadRanking() {
         const hash = window.location.hash.substring(1);
         if (!hash.startsWith("items=")) {
-            document.getElementById('rankingList').innerHTML = "<p>投票ページが特定できません。<br>正しいURLからアクセスしてください。</p>";
+            document.getElementById('rankingList').innerHTML = "<p>投票ページが特定できません。</p>";
             return;
         }
         
         const encodedData = hash.replace("items=", "");
-        const pageId = encodedData.substring(0, 10); // 識別のための先頭10文字
+        
+        // ★現在のURLから比較用のハッシュを生成
+        const targetHash = await generateHash(encodedData);
 
-        // 戻るボタンのリンクも維持
         document.getElementById('backToVote').href = "index.html#items=" + encodedData;
 
         try {
-            // GASにデータをリクエスト
             const response = await fetch(GAS_URL);
             if (!response.ok) throw new Error('Network response was not ok');
             
-            const rows = await response.json(); // GASから届いた全回答データ
-            
+            const rows = await response.json();
             const counts = {};
-            // GASからのデータ構造: [ [タイムスタンプ, list_id, item_name], ... ]
+
             rows.forEach(row => {
                 const listId = String(row[1]).trim();
                 const itemName = String(row[2]).trim();
                 
-                // 現在のページIDに一致する回答だけを集計
-                if (listId === pageId) {
+                // ★ハッシュ値で比較
+                if (listId === targetHash) {
                     counts[itemName] = (counts[itemName] || 0) + 1;
                 }
             });
 
-            // 集計結果を配列にして降順ソート
             const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
             const container = document.getElementById('rankingList');
             
             if (sorted.length === 0) {
-                container.innerHTML = "<p>まだ投票がありません。<br>あなたが最初の1票を投じてみませんか？</p>";
+                container.innerHTML = "<p>まだ投票がありません。</p>";
                 return;
             }
 
-            // HTML生成
             container.innerHTML = sorted.map(([name, count], index) => `
                 <div class="ranking-item">
                     <div style="display:flex; align-items:center; gap:10px;">
@@ -86,14 +89,11 @@
 
         } catch (e) {
             console.error("Error:", e);
-            document.getElementById('rankingList').innerHTML = "<p>データの読み込みに失敗しました。<br><small>GASの設定（全員に公開）を確認してください。</small></p>";
+            document.getElementById('rankingList').innerHTML = "<p>データの読み込みに失敗しました。</p>";
         }
     }
 
-    // 初回読み込み
     loadRanking();
-    
-    // 30秒ごとに自動更新（必要なければ消してもOK）
     setInterval(loadRanking, 30000);
 </script>
 </body>
