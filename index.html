@@ -8,12 +8,23 @@
         body { font-family: sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; line-height: 1.6; background: #f9f9f9; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         textarea { width: 100%; height: 150px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; padding: 10px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button { width: 100%; padding: 12px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-bottom: 5px; }
         button:hover { background: #fa5252; }
+        
+        /* 共有セクションのボタン用 */
+        .action-btns { display: flex; gap: 10px; margin-top: 10px; }
+        .copy-btn { background: #51cf66; flex: 1; font-size: 14px; }
+        .copy-btn:hover { background: #40c057; }
+        .open-btn { background: #339af0; flex: 1; font-size: 14px; }
+        .open-btn:hover { background: #228be6; }
+
         .item-btn { background: #4dabf7; margin-bottom: 10px; transition: 0.2s; }
         .item-btn:hover { background: #339af0; }
         .item-btn:disabled { background: #ccc; cursor: not-allowed; opacity: 0.8; }
-        #shareSection { margin-top: 20px; display: none; word-break: break-all; background: #e7f5ff; padding: 10px; border-radius: 8px; }
+        
+        #shareSection { margin-top: 20px; display: none; background: #e7f5ff; padding: 15px; border-radius: 8px; }
+        #shareLink { display: block; word-break: break-all; font-size: 12px; color: #666; margin-bottom: 10px; background: white; padding: 5px; border-radius: 4px; border: 1px solid #d0e7ff; }
+        
         .voted-msg { color: #888; font-size: 0.9em; text-align: center; margin-top: 10px; }
         .result-link-box { margin-top: 15px; text-align: center; border-top: 1px solid #eee; padding-top: 15px; }
         .result-link-box a { color: #4dabf7; text-decoration: none; font-size: 0.9em; }
@@ -28,9 +39,14 @@
         <p>お菓子の名前を改行区切りで入力してください：</p>
         <textarea id="listInput" placeholder="ナポレオンパイ&#13;&#10;カヌレ&#13;&#10;チーズケーキ"></textarea>
         <button onclick="generatePage()">ページを作成する</button>
+        
         <div id="shareSection">
-            <p>このURLをみんなに共有！</p>
-            <a id="shareLink" href="#"></a>
+            <p style="margin-top:0; font-weight:bold; font-size: 14px;">リンクが完成しました！</p>
+            <div id="shareLink"></div>
+            <div class="action-btns">
+                <button class="copy-btn" onclick="copyUrl()">リンクをコピー</button>
+                <button class="open-btn" onclick="openUrl()">別タブで開く</button>
+            </div>
         </div>
     </div>
 
@@ -55,14 +71,26 @@
         setupVoteMode(hash.replace("items=", ""));
     }
 
+    let generatedUrl = "";
+
     function generatePage() {
         const text = document.getElementById('listInput').value.trim();
         if (!text) return alert("リストを入力してね！");
         const encoded = btoa(encodeURIComponent(text));
-        const url = window.location.origin + window.location.pathname + "#items=" + encoded;
-        document.getElementById('shareLink').href = url;
-        document.getElementById('shareLink').innerText = url;
+        generatedUrl = window.location.origin + window.location.pathname + "#items=" + encoded;
+        
+        document.getElementById('shareLink').innerText = generatedUrl;
         document.getElementById('shareSection').style.display = "block";
+    }
+
+    function copyUrl() {
+        navigator.clipboard.writeText(generatedUrl).then(() => {
+            alert("URLをコピーしました！");
+        });
+    }
+
+    function openUrl() {
+        window.open(generatedUrl, '_blank');
     }
 
     function setupVoteMode(encodedData) {
@@ -78,7 +106,6 @@
         const items = decoded.split('\n');
         const container = document.getElementById('buttonContainer');
 
-        // 結果ページへのリンクをセット
         document.getElementById('toResultPage').href = "result.html#items=" + encodedData;
 
         items.forEach(item => {
@@ -101,14 +128,10 @@
 
     async function submitVote(pageId, itemName) {
         const votedList = JSON.parse(localStorage.getItem('voted_history') || "[]");
-        if (votedList.includes(pageId)) {
-            alert("既に投票済みです。");
-            return;
-        }
+        if (votedList.includes(pageId)) return;
 
         const url = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
         const params = new URLSearchParams();
-        // 識別のためにページIDの先頭10文字を送る
         params.append(ENTRY_ID_LIST, pageId.substring(0, 10));
         params.append(ENTRY_ID_ITEM, itemName);
 
@@ -123,15 +146,10 @@
             votedList.push(pageId);
             localStorage.setItem('voted_history', JSON.stringify(votedList));
 
-            // 結果ページへの遷移確認
-            const resultUrl = "result.html#items=" + pageId;
-            const viewResults = confirm(itemName + " に投票しました！結果を見ますか？\n（反映まで数分かかる場合があります）");
+            // 【修正】アラートはシンプルに「回答した内容」のみ。OKでリロード
+            alert(itemName + " に投票しました！");
+            location.reload();
             
-            if (viewResults) {
-                window.location.href = resultUrl;
-            } else {
-                location.reload();
-            }
         } catch (e) {
             alert("エラーが発生しました。");
         }
