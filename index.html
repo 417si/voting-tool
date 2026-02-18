@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>お菓子投票メーカー</title>
+    <title>投票メーカー</title>
     <style>
         body { font-family: sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; line-height: 1.6; background: #f9f9f9; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -33,11 +33,11 @@
 <body>
 
 <div class="card" id="mainCard">
-    <h2 id="title">投票ページを作ろう 🍬</h2>
+    <h2 id="title">投票ページを作ろう 🗳️</h2>
     
     <div id="createMode">
         <p>お菓子の名前を改行区切りで入力してください：</p>
-        <textarea id="listInput" placeholder="ナポレオンパイ&#13;&#10;カヌレ&#13;&#10;チーズケーキ"></textarea>
+        <textarea id="listInput" placeholder="選択肢1&#13;&#10;選択肢2&#13;&#10;選択肢3"></textarea>
         <button onclick="generatePage()">ページを作成する</button>
         
         <div id="shareSection">
