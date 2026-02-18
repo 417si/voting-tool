@@ -11,7 +11,6 @@
         button { width: 100%; padding: 12px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-bottom: 5px; }
         button:hover { background: #fa5252; }
         
-        /* 共有セクションのボタン用 */
         .action-btns { display: flex; gap: 10px; margin-top: 10px; }
         .copy-btn { background: #51cf66; flex: 1; font-size: 14px; }
         .copy-btn:hover { background: #40c057; }
@@ -65,6 +64,14 @@
     const FORM_ID = "1FAIpQLScRoNElUaNTa7H9a8t3KYsCkrKj7zIs7hbpAvpx1_SZw2GRIQ";
     const ENTRY_ID_LIST = "entry.1232564170"; 
     const ENTRY_ID_ITEM = "entry.643804669"; 
+
+    // ★追加：文字列から一意のハッシュを作る関数
+    async function generateHash(text) {
+        const msgUint8 = new TextEncoder().encode(text);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+    }
 
     const hash = window.location.hash.substring(1);
     if (hash.startsWith("items=")) {
@@ -130,9 +137,12 @@
         const votedList = JSON.parse(localStorage.getItem('voted_history') || "[]");
         if (votedList.includes(pageId)) return;
 
+        // ★ハッシュ生成を待機
+        const listHash = await generateHash(pageId);
+
         const url = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
         const params = new URLSearchParams();
-        params.append(ENTRY_ID_LIST, pageId.substring(0, 10));
+        params.append(ENTRY_ID_LIST, listHash); // ★ハッシュ化したIDを送信
         params.append(ENTRY_ID_ITEM, itemName);
 
         try {
@@ -146,7 +156,6 @@
             votedList.push(pageId);
             localStorage.setItem('voted_history', JSON.stringify(votedList));
 
-            // 【修正】アラートはシンプルに「回答した内容」のみ。OKでリロード
             alert(itemName + " に投票しました！");
             location.reload();
             
