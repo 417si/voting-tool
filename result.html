@@ -8,65 +8,72 @@
         body { font-family: sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; line-height: 1.6; background: #f0f2f5; }
         .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
         h2 { color: #333; margin-bottom: 20px; border-bottom: 2px solid #ff6b6b; display: inline-block; padding-bottom: 5px; }
+        .ranking-container { margin-top: 20px; }
         .ranking-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: #fff; border: 1px solid #eee; border-radius: 10px; transition: 0.3s; }
-        .ranking-item:nth-child(1) { background: #fff9db; border-color: #fcc419; transform: scale(1.05); font-weight: bold; }
+        /* 1位のスタイル */
+        .ranking-item:nth-child(1) { background: #fff9db; border-color: #fcc419; transform: scale(1.05); font-weight: bold; box-shadow: 0 4px 10px rgba(252, 196, 25, 0.2); }
         .rank-badge { background: #ff6b6b; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .vote-count { color: #4dabf7; font-weight: bold; font-size: 1.2em; }
         .back-btn { margin-top: 20px; display: inline-block; text-decoration: none; color: #888; font-size: 14px; }
+        .loading { color: #888; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 id="pageTitle">集計中...</h2>
-    <div id="rankingList">読み込み中...</div>
-    <a href="index.html" class="back-btn">← 投票作成画面へ</a>
+    <h2 id="pageTitle">投票結果 🏆</h2>
+    <div id="rankingList" class="ranking-container">
+        <p class="loading">最新の結果を取得中...</p>
+    </div>
+    <a href="index.html" id="backToVote" class="back-btn">← 投票作成画面へ</a>
 </div>
 
 <script>
-    // 【重要】スプレッドシートのCSV公開URLをここに貼る
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQH2KeCHtO-q2IqDkKTEaoG8vLoihfN1uetAoZkVq2UGiQbGi1yrC0NVVe6Q9wnq5IE6nHl2BhUEZfe/pub?gid=490982875&single=true&output=csv";
+    // 提供いただいたGASのURL
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz4USTEMcdvUl0j1EIuL6sbPftjJikcoECPSLqwjjawZ2tbXqgZSQmbRsVDSd8eLdBu/exec";
 
     async function loadRanking() {
         const hash = window.location.hash.substring(1);
         if (!hash.startsWith("items=")) {
-            document.getElementById('rankingList').innerText = "投票ページが特定できません。";
+            document.getElementById('rankingList').innerHTML = "<p>投票ページが特定できません。<br>正しいURLからアクセスしてください。</p>";
             return;
         }
         
         const encodedData = hash.replace("items=", "");
         const pageId = encodedData.substring(0, 10); // 識別のための先頭10文字
 
-        // ページタイトルを復元
-        const decoded = decodeURIComponent(atob(encodedData));
-        document.getElementById('pageTitle').innerText = "投票結果 🏆";
+        // 戻るボタンのリンクも維持
+        document.getElementById('backToVote').href = "index.html#items=" + encodedData;
 
         try {
-            const response = await fetch(CSV_URL + "&cache=" + new Date().getTime());
-            const csvData = await response.text();
+            // GASにデータをリクエスト
+            const response = await fetch(GAS_URL);
+            if (!response.ok) throw new Error('Network response was not ok');
             
-            // CSVを解析（簡易版）
-            const rows = csvData.split('\n').map(row => row.split(','));
+            const rows = await response.json(); // GASから届いた全回答データ
+            
             const counts = {};
-
+            // GASからのデータ構造: [ [タイムスタンプ, list_id, item_name], ... ]
             rows.forEach(row => {
-                // スプレッドシートの列番号（B列=1, C列=2）に合わせて調整してください
-                const listId = row[1]?.replace(/"/g, '').trim(); 
-                const itemName = row[2]?.replace(/"/g, '').trim(); 
+                const listId = String(row[1]).trim();
+                const itemName = String(row[2]).trim();
                 
+                // 現在のページIDに一致する回答だけを集計
                 if (listId === pageId) {
                     counts[itemName] = (counts[itemName] || 0) + 1;
                 }
             });
 
+            // 集計結果を配列にして降順ソート
             const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
             const container = document.getElementById('rankingList');
             
             if (sorted.length === 0) {
-                container.innerHTML = "<p>まだ投票がありません。<br><small>※反映まで数分かかる場合があります</small></p>";
+                container.innerHTML = "<p>まだ投票がありません。<br>あなたが最初の1票を投じてみませんか？</p>";
                 return;
             }
 
+            // HTML生成
             container.innerHTML = sorted.map(([name, count], index) => `
                 <div class="ranking-item">
                     <div style="display:flex; align-items:center; gap:10px;">
@@ -78,11 +85,16 @@
             `).join('');
 
         } catch (e) {
-            document.getElementById('rankingList').innerText = "データの読み込みに失敗しました。";
+            console.error("Error:", e);
+            document.getElementById('rankingList').innerHTML = "<p>データの読み込みに失敗しました。<br><small>GASの設定（全員に公開）を確認してください。</small></p>";
         }
     }
 
+    // 初回読み込み
     loadRanking();
+    
+    // 30秒ごとに自動更新（必要なければ消してもOK）
+    setInterval(loadRanking, 30000);
 </script>
 </body>
 </html>
