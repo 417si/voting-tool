@@ -42,7 +42,7 @@
         document.getElementById('pageTitle').innerText = "投票結果 🏆";
 
         try {
-            const response = await fetch(CSV_URL);
+            const response = await fetch(CSV_URL + "&cache=" + new Date().getTime());
             const csvData = await response.text();
             
             // CSVを解析（簡易版）
