@@ -13,8 +13,24 @@
         .ranking-item:nth-child(1) { background: #fff9db; border-color: #fcc419; transform: scale(1.05); font-weight: bold; box-shadow: 0 4px 10px rgba(252, 196, 25, 0.2); }
         .rank-badge { background: #ff6b6b; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .vote-count { color: #4dabf7; font-weight: bold; font-size: 1.2em; }
-        .back-btn { margin-top: 20px; display: inline-block; text-decoration: none; color: #888; font-size: 14px; }
-        .loading { color: #888; font-style: italic; }
+        
+        .refresh-btn { 
+            margin-top: 25px; 
+            display: inline-block; 
+            padding: 10px 20px;
+            background-color: #f1f3f5;
+            color: #495057;
+            text-decoration: none; 
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            font-size: 14px; 
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .refresh-btn:hover { background-color: #e9ecef; }
+        .refresh-btn:disabled { opacity: 0.5; cursor: wait; }
+        
+        .auto-msg { font-size: 11px; color: #adb5bd; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -22,15 +38,16 @@
 <div class="card">
     <h2 id="pageTitle">投票結果 🏆</h2>
     <div id="rankingList" class="ranking-container">
-        <p class="loading">最新の結果を取得中...</p>
+        <p>最新の結果を取得中...</p>
     </div>
-    <a href="index.html" id="backToVote" class="back-btn">← 投票作成画面へ</a>
+    
+    <button onclick="location.reload()" id="refreshBtn" class="refresh-btn">🔄 最新の結果に更新する</button>
+    <p class="auto-msg" id="timerMsg">※10秒ごとに自動で更新されます</p>
 </div>
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz4USTEMcdvUl0j1EIuL6sbPftjJikcoECPSLqwjjawZ2tbXqgZSQmbRsVDSd8eLdBu/exec";
 
-    // ★index.htmlと同じハッシュ関数を追加
     async function generateHash(text) {
         const msgUint8 = new TextEncoder().encode(text);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -39,32 +56,26 @@
     }
 
     async function loadRanking() {
+        const btn = document.getElementById('refreshBtn');
+        const timerMsg = document.getElementById('timerMsg');
+        
+        // 更新中であることを表示
+        timerMsg.innerText = "同期中...";
+
         const hash = window.location.hash.substring(1);
-        if (!hash.startsWith("items=")) {
-            document.getElementById('rankingList').innerHTML = "<p>投票ページが特定できません。</p>";
-            return;
-        }
+        if (!hash.startsWith("items=")) return;
         
         const encodedData = hash.replace("items=", "");
-        
-        // ★現在のURLから比較用のハッシュを生成
         const targetHash = await generateHash(encodedData);
-
-        document.getElementById('backToVote').href = "index.html#items=" + encodedData;
 
         try {
             const response = await fetch(GAS_URL);
-            if (!response.ok) throw new Error('Network response was not ok');
-            
             const rows = await response.json();
             const counts = {};
 
             rows.forEach(row => {
-                const listId = String(row[1]).trim();
-                const itemName = String(row[2]).trim();
-                
-                // ★ハッシュ値で比較
-                if (listId === targetHash) {
+                if (String(row[1]).trim() === targetHash) {
+                    const itemName = String(row[2]).trim();
                     counts[itemName] = (counts[itemName] || 0) + 1;
                 }
             });
@@ -74,27 +85,27 @@
             
             if (sorted.length === 0) {
                 container.innerHTML = "<p>まだ投票がありません。</p>";
-                return;
-            }
-
-            container.innerHTML = sorted.map(([name, count], index) => `
-                <div class="ranking-item">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="rank-badge">${index + 1}</span>
-                        <span>${name}</span>
+            } else {
+                container.innerHTML = sorted.map(([name, count], index) => `
+                    <div class="ranking-item">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="rank-badge">${index + 1}</span>
+                            <span>${name}</span>
+                        </div>
+                        <span class="vote-count">${count} 票</span>
                     </div>
-                    <span class="vote-count">${count} 票</span>
-                </div>
-            `).join('');
+                `).join('');
+            }
+            timerMsg.innerText = "※10秒ごとに自動で更新されます";
 
         } catch (e) {
-            console.error("Error:", e);
-            document.getElementById('rankingList').innerHTML = "<p>データの読み込みに失敗しました。</p>";
+            timerMsg.innerText = "接続エラー。再試行中...";
         }
     }
 
     loadRanking();
-    setInterval(loadRanking, 30000);
+    // 10秒（10000ms）に変更
+    setInterval(loadRanking, 10000);
 </script>
 </body>
 </html>
