@@ -8,92 +8,44 @@
         body { font-family: sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; line-height: 1.6; background: #f0f2f5; }
         .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         h2 { text-align: center; color: #333; margin-top: 0; }
-        
         textarea { width: 100%; height: 120px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; padding: 12px; box-sizing: border-box; font-size: 14px; }
-        
-        /* 共通ボタン */
         .btn-main { width: 100%; padding: 14px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; }
         .btn-main:hover { background: #fa5252; }
         .btn-main:disabled { background: #ccc; cursor: not-allowed; }
-        
         .config-group { background: #fff5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; border: 1px solid #ffe3e3; }
         .config-item { display: flex; align-items: center; justify-content: space-between; }
-        
-        /* 選択肢ボタン */
         .item-label { display: block; background: #4dabf7; color: white; padding: 14px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; font-weight: bold; position: relative; overflow: hidden; }
         .item-label:hover { background: #339af0; }
-        
-        /* 自分が選んだ項目のスタイル（緑/黄緑） */
-        .my-vote-label {
-            background: #51cf66 !important; 
-            color: #fff !important;
-            border: 2px solid #40c057;
-            box-shadow: 0 4px 8px rgba(64, 192, 87, 0.2);
-        }
-
+        .my-vote-label { background: #51cf66 !important; color: #fff !important; border: 2px solid #40c057; box-shadow: 0 4px 8px rgba(64, 192, 87, 0.2); }
         input[type="checkbox"] { display: none; }
         input[type="checkbox"]:checked + .item-label { background: #1864ab; box-shadow: inset 0 0 12px rgba(0,0,0,0.2); }
         input[type="checkbox"]:checked + .item-label::after { content: "✓"; position: absolute; right: 15px; }
-        
-        /* 投票後のグレーアウト（自分以外） */
         input[type="checkbox"]:disabled + .item-label { background: #ced4da; cursor: not-allowed; }
-
-        /* 送信ボタンエリア */
         .vote-divider { border: 0; border-top: 1px solid #eee; margin: 30px 0 20px 0; }
         .button-wrapper { text-align: center; padding: 10px 0; }
-        #multiSubmitBtn { 
-            display: none; 
-            width: 90%; 
-            padding: 15px; 
-            background: #22b8cf; 
-            color: white; 
-            border: none; 
-            border-radius: 30px;
-            font-size: 16px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(34, 184, 207, 0.3); 
-            transition: 0.2s;
-        }
+        #multiSubmitBtn { display: none; width: 90%; padding: 15px; background: #22b8cf; color: white; border: none; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(34, 184, 207, 0.3); transition: 0.2s; }
         #multiSubmitBtn:hover:not(:disabled) { background: #1199ab; transform: translateY(-1px); }
         #multiSubmitBtn:disabled { background: #ccc; box-shadow: none; }
-
-        /* 共有セクションのボタンレイアウト */
         #shareSection { margin-top: 20px; display: none; background: #e7f5ff; padding: 15px; border-radius: 8px; border: 1px solid #d0e7ff; }
         #shareLink { display: block; word-break: break-all; font-size: 11px; color: #666; margin-bottom: 10px; background: white; padding: 8px; border-radius: 4px; border: 1px solid #eee; }
         .share-buttons { display: flex; gap: 8px; }
         .btn-copy { flex: 2; background: #51cf66; }
-        .btn-copy:hover { background: #40c057; }
         .btn-open { flex: 1; background: #4dabf7; }
-        .btn-open:hover { background: #339af0; }
-
         .voted-msg { color: #fa5252; font-size: 0.9em; text-align: center; margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
-
 <div class="card">
     <h2 id="title">投票ページを作ろう 🗳️</h2>
-    
     <div id="createMode">
         <p style="font-size: 14px; color: #666;">選択肢を改行区切りで入力してください：</p>
         <textarea id="listInput" placeholder="りんご&#13;&#10;バナナ&#13;&#10;ぶどう"></textarea>
-        
         <div class="config-group">
-            <div class="config-item">
-                <label>1人あたりの最大回答数：</label>
-                <select id="voteCount">
-                    <option value="1">1つ（単一回答）</option>
-                    <option value="2">2つまで</option>
-                    <option value="3">3つまで</option>
-                    <option value="4">4つまで</option>
-                    <option value="5">5つまで</option>
-                </select>
+            <div class="config-item"><label>1人あたりの最大回答数：</label>
+                <select id="voteCount"><option value="1">1つ（単一回答）</option><option value="2">2つまで</option><option value="3">3つまで</option><option value="4">4つまで</option><option value="5">5つまで</option></select>
             </div>
         </div>
-
         <button class="btn-main" onclick="generatePage()">ページを作成する</button>
-        
         <div id="shareSection">
             <span style="font-size: 12px; font-weight: bold; color: #1c7ed6;">共有用URL:</span>
             <div id="shareLink"></div>
@@ -103,19 +55,12 @@
             </div>
         </div>
     </div>
-
     <div id="voteMode" style="display: none;">
         <p id="instruction" style="font-weight:bold; color:#ff6b6b; text-align:center; margin-bottom: 20px;"></p>
-        
         <div id="buttonContainer"></div>
-        
         <hr class="vote-divider">
-        <div class="button-wrapper">
-            <button id="multiSubmitBtn" onclick="submitMultiVote()">投票を送信する</button>
-        </div>
-        
+        <div class="button-wrapper"><button id="multiSubmitBtn" onclick="submitMultiVote()">投票を送信する</button></div>
         <div id="votedAlert" class="voted-msg" style="display:none;">※この投票ページでは回答済みです</div>
-        
         <div style="text-align:center; margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
             <a id="toResultPage" href="#" style="color:#4dabf7; text-decoration:none; font-size:14px; font-weight:bold;">📊 リアルタイム結果を見る</a>
         </div>
@@ -123,12 +68,10 @@
 </div>
 
 <script>
-    // 先ほどご提示いただいたフォームID
     const FORM_ID = "1E7-uEASFhZaTaCwbM1MU_A1e1LRCJIDC7DUktioSFFE";
-    // 各項目の entry ID
     const ENTRY_ID_LIST = "entry.1232564170"; 
     const ENTRY_ID_ITEM = "entry.643804669"; 
-    const ENTRY_ID_UID = "entry.1802951711"; 
+    const ENTRY_ID_UID = "entry.480076246"; // 正しいIDに修正しました
 
     async function generateHash(text) {
         const msgUint8 = new TextEncoder().encode(text);
@@ -140,10 +83,7 @@
     function generatePage() {
         const text = document.getElementById('listInput').value.trim();
         if (!text) return alert("選択肢を入力してね！");
-        const config = {
-            items: text.split('\n').filter(i => i.trim()),
-            max: document.getElementById('voteCount').value
-        };
+        const config = { items: text.split('\n').filter(i => i.trim()), max: document.getElementById('voteCount').value };
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(config))));
         const url = window.location.origin + window.location.pathname + "#v=" + encoded;
         document.getElementById('shareLink').innerText = url;
@@ -157,9 +97,7 @@
             try {
                 const decoded = JSON.parse(decodeURIComponent(escape(atob(rawData))));
                 setupVoteMode(decoded, rawData);
-            } catch (e) {
-                alert("データの読み込みに失敗しました。");
-            }
+            } catch (e) { alert("データの読み込みに失敗しました。"); }
         }
     }
 
@@ -169,19 +107,16 @@
     function setupVoteMode(config, rawHash) {
         pageRawData = rawHash;
         currentConfig = config;
-        
         document.getElementById('createMode').style.display = "none";
         document.getElementById('voteMode').style.display = "block";
         document.getElementById('title').innerText = "投票受付中 🗳️";
 
         const history = JSON.parse(localStorage.getItem('voted_history_v2') || "[]");
         const myVoteRecord = history.find(h => h.id === pageRawData);
-        // 旧バージョンとの互換性
-        const hasVoted = !!myVoteRecord || JSON.parse(localStorage.getItem('voted_history') || "[]").includes(pageRawData);
+        const hasVoted = !!myVoteRecord;
 
         const isMulti = currentConfig.max > 1;
         if (isMulti) document.getElementById('multiSubmitBtn').style.display = "inline-block";
-        
         document.getElementById('instruction').innerText = isMulti ? `最大 ${currentConfig.max} つまで選べます` : "どれか1つ選んでください";
         document.getElementById('toResultPage').href = "result.html#items=" + pageRawData;
 
@@ -189,26 +124,14 @@
         currentConfig.items.forEach((item, index) => {
             const id = "item-" + index;
             const wrap = document.createElement('div');
-            
             const isMyVote = myVoteRecord && myVoteRecord.selected.includes(item);
-            const labelClass = isMyVote ? "item-label my-vote-label" : "item-label";
-            const labelText = hasVoted ? `${item} (済)` : item;
-
-            wrap.innerHTML = `
-                <input type="checkbox" id="${id}" class="vote-check" value="${item}" ${hasVoted ? 'disabled' : ''}>
-                <label for="${id}" class="${labelClass}">${labelText}</label>
-            `;
+            wrap.innerHTML = `<input type="checkbox" id="${id}" class="vote-check" value="${item}" ${hasVoted ? 'disabled' : ''}>
+                <label for="${id}" class="${isMyVote ? 'item-label my-vote-label' : 'item-label'}">${hasVoted ? item + ' (済)' : item}</label>`;
             container.appendChild(wrap);
-            
-            // 単一回答時の即時送信
             if (!isMulti && !hasVoted) {
-                wrap.querySelector('label').onclick = (e) => {
-                    e.preventDefault();
-                    submitMultiVote([item]);
-                };
+                wrap.querySelector('label').onclick = (e) => { e.preventDefault(); submitMultiVote([item]); };
             }
         });
-
         if (hasVoted) {
             document.getElementById('votedAlert').style.display = "block";
             document.getElementById('multiSubmitBtn').disabled = true;
@@ -219,41 +142,29 @@
     async function submitMultiVote(quickItem = null) {
         const selected = quickItem || Array.from(document.querySelectorAll('.vote-check:checked')).map(el => el.value);
         if (selected.length === 0) return alert("1つ以上選択してください");
-        if (selected.length > currentConfig.max) return alert(`最大 ${currentConfig.max} つまでです`);
 
-        // 同一セッションUID
         const sessionUid = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-        
         const listHash = await generateHash(pageRawData);
         const url = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
 
-        // 複数送信
-        for (const item of selected) {
-            const params = new URLSearchParams();
-            params.append(ENTRY_ID_LIST, listHash);
-            params.append(ENTRY_ID_ITEM, item);
-            params.append(ENTRY_ID_UID, sessionUid);
-            
-            await fetch(url, { method: "POST", mode: "no-cors", body: params });
-        }
-
-        const history = JSON.parse(localStorage.getItem('voted_history_v2') || "[]");
-        history.push({ id: pageRawData, selected: selected });
-        localStorage.setItem('voted_history_v2', JSON.stringify(history));
-
-        alert("投票を受け付けました！");
-        location.reload();
+        try {
+            for (const item of selected) {
+                const params = new URLSearchParams();
+                params.append(ENTRY_ID_LIST, listHash);
+                params.append(ENTRY_ID_ITEM, item);
+                params.append(ENTRY_ID_UID, sessionUid);
+                await fetch(url, { method: "POST", mode: "no-cors", body: params });
+            }
+            const history = JSON.parse(localStorage.getItem('voted_history_v2') || "[]");
+            history.push({ id: pageRawData, selected: selected });
+            localStorage.setItem('voted_history_v2', JSON.stringify(history));
+            alert("投票を送信しました！");
+            location.reload();
+        } catch (e) { alert("送信エラー: " + e.message); }
     }
 
-    function copyUrl() { 
-        navigator.clipboard.writeText(document.getElementById('shareLink').innerText).then(() => alert("URLをコピーしました！")); 
-    }
-
-    function openUrl() {
-        const url = document.getElementById('shareLink').innerText;
-        window.open(url, '_blank');
-    }
-
+    function copyUrl() { navigator.clipboard.writeText(document.getElementById('shareLink').innerText).then(() => alert("URLをコピーしました！")); }
+    function openUrl() { window.open(document.getElementById('shareLink').innerText, '_blank'); }
     init();
 </script>
 </body>
