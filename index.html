@@ -11,7 +11,6 @@
         
         textarea { width: 100%; height: 120px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; padding: 12px; box-sizing: border-box; font-size: 14px; }
         
-        /* 共通ボタン */
         .btn-main { width: 100%; padding: 14px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; }
         .btn-main:hover { background: #fa5252; }
         .btn-main:disabled { background: #ccc; cursor: not-allowed; }
@@ -19,7 +18,6 @@
         .config-group { background: #fff5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; border: 1px solid #ffe3e3; }
         .config-item { display: flex; align-items: center; justify-content: space-between; }
         
-        /* 選択肢ボタン */
         .item-label { display: block; background: #4dabf7; color: white; padding: 14px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; font-weight: bold; position: relative; overflow: hidden; }
         .item-label:hover { background: #339af0; }
         
@@ -36,7 +34,6 @@
         input[type="checkbox"]:checked + .item-label::after { content: "✓"; position: absolute; right: 15px; }
         input[type="checkbox"]:disabled + .item-label { background: #ced4da; cursor: not-allowed; }
 
-        /* 送信ボタンエリア */
         .vote-divider { border: 0; border-top: 1px solid #eee; margin: 30px 0 20px 0; }
         .button-wrapper { text-align: center; padding: 10px 0; }
         #multiSubmitBtn { 
@@ -56,13 +53,12 @@
         #multiSubmitBtn:hover:not(:disabled) { background: #1199ab; transform: translateY(-1px); }
         #multiSubmitBtn:disabled { background: #ccc; box-shadow: none; }
 
-        /* 共有セクションのボタンレイアウト */
         #shareSection { margin-top: 20px; display: none; background: #e7f5ff; padding: 15px; border-radius: 8px; border: 1px solid #d0e7ff; }
         #shareLink { display: block; word-break: break-all; font-size: 11px; color: #666; margin-bottom: 10px; background: white; padding: 8px; border-radius: 4px; border: 1px solid #eee; }
         .share-buttons { display: flex; gap: 8px; }
         .btn-copy { flex: 2; background: #51cf66; }
         .btn-copy:hover { background: #40c057; }
-        .btn-open { flex: 1; background: #4dabf7; } /* グレーから青に変更 */
+        .btn-open { flex: 1; background: #4dabf7; }
         .btn-open:hover { background: #339af0; }
 
         .voted-msg { color: #fa5252; font-size: 0.9em; text-align: center; margin-top: 15px; font-weight: bold; }
@@ -71,10 +67,10 @@
 <body>
 
 <div class="card">
-    <h2 id="title">投票を作ろう 🗳️</h2>
+    <h2 id="title">投票ページを作ろう 🗳️</h2>
     
     <div id="createMode">
-        <p style="font-size: 14px; color: #666;">選択肢を改行区切りで入力してください ⬇️</p>
+        <p style="font-size: 14px; color: #666;">選択肢を改行区切りで入力してください：</p>
         <textarea id="listInput" placeholder="りんご&#13;&#10;バナナ&#13;&#10;ぶどう"></textarea>
         
         <div class="config-group">
@@ -121,9 +117,10 @@
 </div>
 
 <script>
-    const FORM_ID = "1FAIpQLScRoNElUaNTa7H9a8t3KYsCkrKj7zIs7hbpAvpx1_SZw2GRIQ";
+    const FORM_ID = "1E7-uEASFhZaTaCwbM1MU_A1e1LRCJIDC7DUktioSFFE";
     const ENTRY_ID_LIST = "entry.1232564170"; 
     const ENTRY_ID_ITEM = "entry.643804669"; 
+    const ENTRY_ID_UID = "entry.1802951711"; // 取得したIDを設定済み
 
     async function generateHash(text) {
         const msgUint8 = new TextEncoder().encode(text);
@@ -214,6 +211,9 @@
         if (selected.length === 0) return alert("1つ以上選択してください");
         if (selected.length > currentConfig.max) return alert(`最大 ${currentConfig.max} つまでです`);
 
+        // 同一投票を識別するためのセッションUIDを作成
+        const sessionUid = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        
         const listHash = await generateHash(pageRawData);
         const url = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
 
@@ -221,6 +221,8 @@
             const params = new URLSearchParams();
             params.append(ENTRY_ID_LIST, listHash);
             params.append(ENTRY_ID_ITEM, item);
+            params.append(ENTRY_ID_UID, sessionUid); // UIDを一緒に送信
+            
             await fetch(url, { method: "POST", mode: "no-cors", body: params });
         }
 
